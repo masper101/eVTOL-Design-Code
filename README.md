@@ -8,17 +8,17 @@ Date Created: 8 November 2024
 This project is used to design an eVTOL aircraft based on user-specified design points.
 
 # Install Instructions
-1. Create python virtual environment in working directory. \
+1. Create python virtual environment in working directory.
 
 In MACOS:\
-$ python -m venv . \
+$ python -m venv .
 
-2. Activate virtual environment. \
+2. Activate virtual environment.
 
 In MACOS:\
-$ source bin/ activate \
+$ source bin/ activate
 
-3. Install dependencies.\
+3. Install dependencies.
 
 In MACOS:\
 $ pip install -r requirements.txt
