@@ -47,8 +47,13 @@ def rotor_loading(DL=2, N=4, R=.05, omega=100*2*np.pi/60, rho=1.225, nb=4, c=.02
     Cd_bar  = 0.0087 - 0.035 * AoA_bar + 0.4 * AoA_bar**2
 
 
-
     return
 
 if __name__=="__main__":
-    rotor_loading()
+    loading = rotor_loading()
+
+    Cd = loading.Cd_bar
+    print(Cd)
+
+    
+
