@@ -1,0 +1,8 @@
+# Binaries for programs and plugins
+*.cfg
+
+
+# Dependency directories (remove the comment below to include it)
+bin/ 
+include/
+lib/
