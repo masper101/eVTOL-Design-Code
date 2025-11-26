@@ -2,7 +2,8 @@
 Electric vertical takeoff and landing (eVTOL) aircraft design code
 
 Author: Matthew Asper \
-Date Created: 8 November 2024
+Date Created: 8 November 2024\
+Revised: 26 November 2025
 
 # Purpose
 This project is used to design an eVTOL aircraft based on user-specified design points.
