@@ -29,7 +29,7 @@ class propeller():
     Author: Matt Asper (matt.asper101@gmail.com)
     Date: 26 November 2025
     """
-    def __init__(self, **kwargs):
+    def __init__(self, R=None, omega=None, **kwargs):
 
         # attach input kwargs to propeller object
         self.prop_inputs = kwargs

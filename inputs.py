@@ -4,7 +4,7 @@ This script defines the design point for the aircraft
 By: Matt Asper
 Date: 31 October 2024
 '''
-from pyatmos import coesa76
+from ambiance import Atmosphere
 
 def inputs():
     payload     = 0.2   # [kg]
