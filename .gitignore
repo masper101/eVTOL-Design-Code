@@ -1,0 +1,10 @@
+# Binaries for programs and plugins
+*.cfg
+
+
+# Dependency directories (remove the comment below to include it)
+eVTOL/
+bin/ 
+include/
+lib/
+output/
