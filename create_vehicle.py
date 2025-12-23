@@ -2,9 +2,7 @@
 Initialize this module first to begin the eVTOL design process. 
 
 Module functions
-- initialization: 
-    -- queries user to input aircraft requirements.
-    -- return aircraft object with requirements and vehicle specifications
+- initialization 
 - compute_MTOW
 - display_specs
 - output_specs
@@ -13,7 +11,8 @@ Module functions
 Author: Matt Asper
 Last Revised: 22 December 2025
 '''
-from ambiance import Atmosphere
+import csv
+import os
 
 class vehicle_class():
     def __init__(self):
@@ -84,11 +83,11 @@ class vehicle_class():
         This function prints the aircraft specifications to the screen.
         """
 
-        print(f"Displaying vehicle specifications...\n")
+        print(f"\nDisplaying vehicle specifications...")
         print(f"-------------------------------\n")
 
         for key, value in self.reqs.items():
-            print(f"{key} \t: \t {value["value"]} {round(value["units"],1)}\n")
+            print(f"{key:15}: \t{round(value["value"],1):10} {value["units"]}\n")
 
     def output_specs(self, filepath, filename):
         """
@@ -99,9 +98,36 @@ class vehicle_class():
         filepath    : string that specifies the relative filepath for the csv file.
         filename    : filename for the csv file.        
         """
-        #TODO: finish this
+        
+        # Create 'output' folder to export data to
+        full_path = filepath + "/ouput/" + filename + ".csv"
 
+        # Create directory if it doesn't exist; ignore if it does
+        os.makedirs(filepath + "/ouput/", exist_ok=True) 
+
+        # Sample data (a list of dictionaries)
+        headers = ['Specification', 'Value', 'Units']
+
+        # Open the file in 'w' mode (write mode)
+        # This creates the file if it doesn't exist and overwrites it if it does
+        try:
+            with open(full_path, mode='w', newline='') as file:
+                writer = csv.DictWriter(file, fieldnames=headers)
+
+                # Write the header row
+                writer.writeheader()
+
+                # Write the data rows
+                for key, value in self.reqs.items():
+                    writer.writerow({'Specification': key, 'Value': value["value"], 'Units': value["units"]})
+
+            print(f"Successfully created/overwritten '{full_path}'")
+            print(f"File size: {os.path.getsize(full_path)} bytes")
+
+        except IOError as e:
+            print(f"Error writing to file: {e}")
 
 if __name__=="__main__":
     vehicle = vehicle_class()
     vehicle.display_specs()
+    vehicle.output_specs(filepath=os.getcwd(), filename="test")

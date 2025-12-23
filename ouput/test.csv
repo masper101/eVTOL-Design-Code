@@ -1,0 +1,6 @@
+Specification,Value,Units
+range,10000.0,m
+payload,50.0,kg
+vtas_cruise,100.0,m/s
+endurance,600.0,s
+MTOW,333.33333333333337,kg
