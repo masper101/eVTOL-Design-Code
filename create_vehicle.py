@@ -8,14 +8,17 @@ Module functions
 - output_specs
 
 
-Author: Matt Asper
+Author: Matt Asper (matt.asper101@gmail.com)
 Last Revised: 22 December 2025
 '''
 import csv
 import os
+from pathlib import Path
+from read_yml import read_yml
 
-class vehicle_class():
-    def __init__(self):
+class VehicleClass(): # make dataclass?
+
+    def __init__(self, run_mode):
         """
         This function initializes the vehicle and queries the user for requirements.
 
@@ -36,13 +39,21 @@ class vehicle_class():
 
         print(f"Starting vehicle design process...\n")
 
-        self.reqs = dict()
+        # Execute run_mode
+        if run_mode == "manual":
 
-        # query user to input requirements
-        self.reqs["range"]        = {"value": float(input("Input cruise range in meters: ")), "units": "m"}
-        self.reqs["payload"]      = {"value": float(input("Enter required payload in kilograms: ")), "units": "kg"}
-        self.reqs["vtas_cruise"]  = {"value": float(input("Enter required true cruise speed in meters per second: ")), "units": "m/s"}
-        self.reqs["endurance"]    = {"value": float(input("Enter required endurance in seconds: ")), "units": "s"}
+            self.reqs = dict()
+
+            # query user to input requirements
+            self.reqs["range"]        = {"value": float(input("Input cruise range in meters: ")), "units": "m"}
+            self.reqs["payload"]      = {"value": float(input("Enter required payload in kilograms: ")), "units": "kg"}
+            self.reqs["vtas_cruise"]  = {"value": float(input("Enter required true cruise speed in meters per second: ")), "units": "m/s"}
+            self.reqs["endurance"]    = {"value": float(input("Enter required endurance in seconds: ")), "units": "s"}
+
+        elif run_mode == "auto":
+            full_path = Path("configs/group1_quad.yml")  # path to .yml config file
+            config_params = read_yml(full_path)
+            self.reqs = config_params["reqs"]
 
         # initialize iteration counter for vehicle weight
         self.iter = 1
@@ -73,10 +84,9 @@ class vehicle_class():
         else:
             self.reqs["MTOW"]["value"] = 0  #reset MTOW for new calc
 
-            # loop through vehicle subsystem and sum weights
+            # loop through vehicle subsystems and sum weights
             for key, value in self.subsystem.items():
                 self.reqs["MTOW"]["value"] += self.subsystem[key][mass] * margin
-
 
     def display_specs(self):
         """"
@@ -128,6 +138,6 @@ class vehicle_class():
             print(f"Error writing to file: {e}")
 
 if __name__=="__main__":
-    vehicle = vehicle_class()
+    vehicle = VehicleClass(run_mode="auto")
     vehicle.display_specs()
     vehicle.output_specs(filepath=os.getcwd(), filename="test")
