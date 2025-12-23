@@ -1,0 +1,38 @@
+reqs:
+  range: 
+    value: 1000
+    units: "m"
+  payload:
+    value: 1
+    units: "kg"
+  vtas_cruise:
+    value: 10
+    units: "m/s"
+  endurance:
+    value: 600
+    units: "s"
+
+mission:
+  segments:
+    - name: "takeoff"
+      duration: 10
+      Velocity: [0, 1]
+    - name: "hover_1"
+      duration: 60
+      Velocity: [0, 0]
+    - name: "climb"
+      duration: 30
+      Velocity: [.5, 0.5]
+    - name: "cruise"
+      duration: 100
+      Velocity: [10, 0]
+    - name: "descent"
+      duration: 30
+      Velocity: [.5, -0.5]
+    - name: "hover_2"
+      duration: 60
+      Velocity: [0, 0]
+    - name: "landing"
+      duration: 10
+      Velocity: [0, -1]
+    

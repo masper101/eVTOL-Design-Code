@@ -21,7 +21,7 @@ FM:     figure of merit
 """
 import numpy as np
 
-class propeller():
+class Propeller():
     """
     This module creates a propeller object with user-specified properties.
     The module includes functions to compute propeller performance.
