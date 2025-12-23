@@ -41,7 +41,7 @@ class vehicle_class():
         # query user to input requirements
         self.reqs["range"]        = {"value": float(input("Input cruise range in meters: ")), "units": "m"}
         self.reqs["payload"]      = {"value": float(input("Enter required payload in kilograms: ")), "units": "kg"}
-        self.reqs["vtas_cruise"]  = {"value": float(input("Enter required cruise speed (true) in meters per second: ")), "units": "m/s"}
+        self.reqs["vtas_cruise"]  = {"value": float(input("Enter required true cruise speed in meters per second: ")), "units": "m/s"}
         self.reqs["endurance"]    = {"value": float(input("Enter required endurance in seconds: ")), "units": "s"}
 
         # initialize iteration counter for vehicle weight
@@ -100,10 +100,10 @@ class vehicle_class():
         """
         
         # Create 'output' folder to export data to
-        full_path = filepath + "/ouput/" + filename + ".csv"
+        full_path = filepath + "/output/" + filename + ".csv"
 
         # Create directory if it doesn't exist; ignore if it does
-        os.makedirs(filepath + "/ouput/", exist_ok=True) 
+        os.makedirs(filepath + "/output/", exist_ok=True) 
 
         # Sample data (a list of dictionaries)
         headers = ['Specification', 'Value', 'Units']
