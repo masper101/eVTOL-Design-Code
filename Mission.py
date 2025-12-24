@@ -22,8 +22,9 @@ from pathlib import Path
 import plotly.graph_objects as go
 import numpy as np
 from compute_distance import compute_distance
+from get_atmos import get_atmos
 
-class Mission():
+class Mission:
 
     def __init__(self, run_mode):
         """
@@ -54,6 +55,13 @@ class Mission():
                 self.segments[i]["Velocity"] = V  # convert Velocity to np array
                 dt = float(self.segments[i]["duration"])
                 self.segments[i]["Displacement"] = compute_distance(dt, V)  # compute distance traveled in segment
+            
+            # find positions of segment end points
+            self.find_positions()  
+            
+            # get atmosphere quantities at each mission segment
+            for i in range(len(self.segments)):
+                self.segments[i]["atmos"] = get_atmos([self.segments[i]["Start"][1], self.segments[i]["End"][1]])
 
     def input_segments(self):
         """
@@ -64,12 +72,32 @@ class Mission():
 
         return
     
+    def find_positions(self):
+        """
+        This function finds the global 'Start' and 'End' coordinates of each mission.
+        Coordinates are relative to 'Start' of the first segment.
+
+        Outputs
+        -----
+        self.segments[i]["Start"]   :   position of beginning of segment i
+        self.segments[i]["End"]     :   position of End of segment i
+        """
+        
+        # initialize 'Start' and 'End' arrays
+        self.segments[0]["Start"] = np.zeros(self.segments[0]["Displacement"].shape)
+        self.segments[0]["End"] = np.zeros(self.segments[0]["Displacement"].shape)
+
+        for i in range(len(self.segments)):
+            if not i == 0: 
+                self.segments[i]["Start"] = self.segments[i-1]["End"]
+            self.segments[i]["End"] = self.segments[i]["Start"] + self.segments[i]["Displacement"]
+
     def plot_trajectory(self):
         """
         This function plots the trajectory of the aircraft mission.
         """
 
-        # Append mission segment trajectories to dX array
+        # AppEnd mission segment trajectories to dX array
         dX = np.array([0, 0])
 
         for seg_i in self.segments:
@@ -80,11 +108,13 @@ class Mission():
 
         # Loop through dX and plot trajectory
         for i in range(len(dX)-1):
+            X = [self.segments[i]["Start"][0], self.segments[i]["End"][0]]
+            Y = [self.segments[i]["Start"][1], self.segments[i]["End"][1]]
             fig.add_trace(go.Scatter(
-                x=dX[i:i+2,0], 
-                y=dX[i:i+2,1], 
+                x=X, 
+                y=Y, 
                 mode='lines', 
-                name=f'{self.segments[i]["name"]}' # Name for the legend
+                name=f'{self.segments[i]["name"]}' # Name for the legEnd
             ))
             
         # Add labels
