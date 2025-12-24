@@ -16,7 +16,7 @@ import os
 from pathlib import Path
 from read_yml import read_yml
 
-class VehicleClass(): # make dataclass?
+class Aircraft: # make dataclass?
 
     def __init__(self, run_mode):
         """
@@ -138,6 +138,6 @@ class VehicleClass(): # make dataclass?
             print(f"Error writing to file: {e}")
 
 if __name__=="__main__":
-    vehicle = VehicleClass(run_mode="auto")
-    vehicle.display_specs()
-    vehicle.output_specs(filepath=os.getcwd(), filename="test")
+    aircraft = Aircraft(run_mode="auto")
+    aircraft.display_specs()
+    aircraft.output_specs(filepath=os.getcwd(), filename="test")

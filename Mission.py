@@ -24,7 +24,7 @@ import numpy as np
 from compute_distance import compute_distance
 from get_atmos import get_atmos
 
-class Mission():
+class Mission:
 
     def __init__(self, run_mode):
         """
