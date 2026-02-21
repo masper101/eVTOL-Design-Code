@@ -11,6 +11,7 @@ import numpy as np
 from add_dictEntry import add_dictEntry
 from ambiance import Atmosphere
 import plotly.graph_objects as go
+from compute_inflow import compute_inflow
 
 class Propeller:
 
@@ -34,7 +35,7 @@ class Propeller:
             self.params[key] = value
 
 
-    def run_propLoading(self, model, T, rho, a):
+    def run_propLoading(self, model, T, rho, a, alpha, V):
         """
         This exercises user-specified propeller loading models to estimate performance.
 
@@ -52,7 +53,7 @@ class Propeller:
 
         # select propeller model
         if model == "MT":
-            self.run_momentumTheory(T, rho, a)
+            self.run_momentumTheory(T, rho, a, alpha, V)
         elif model == "BET":
             self.run_bladeElementTheory()
         elif model == "BET":
@@ -62,22 +63,26 @@ class Propeller:
             "Available models include 'MT', 'BET', and 'BEMT'.")
 
     
-    def run_momentumTheory(self, T, rho, a, kappa=1.15):  #TODO:Validate trends
+    def run_momentumTheory(self, W, rho, a, alpha, V, kappa=1.15):  #TODO:Validate trends
         """
         This function applies momentum theory to determine propeller performance.
 
         Inputs
         -----
-        T                   :   required total propeller thrust [N]
+        W                   :   vehicle weight [N]
+        alpha               :   rotor tilt [deg]
         self.params["Np"]   :   number of propellers [-]
         rho                 :   ambient air density [kg/m^3]
         self.params["DL"]   :   total propeller disk loading [Pa]
         a                   :   ambient speed of sound [m/s]
         self.params["sigma"]:   propeller solidity [-]
         kappa               :   indcued power factor [-]
+        self.params["Mtip"] :   propeller tip mach number [-]
+        V                   :   flight speed [m/s]
         
         Outputs
         -----
+        self.perf           :   required total propeller thrust [N]
         self.perf           :   dictionary of propeller performance data
         self.params["A"]    :   total propeller area [m^2]
         self.params["Ap"]   :   individual propeller area [m^2]
@@ -87,19 +92,24 @@ class Propeller:
         self.perf["Pp"]     :   individual propeller power required [W]
         self.perf["Tp"]     :   individual propeller thrust [N]
         self.perf["FM"]     :   propeller figure of merit [-]
+        self.perf["lam"]    :   propeller inflow [-]
         """
+
+        alpha_rad = alpha * np.pi / 180
+
+        # compute required thrusts
+        T = W / np.cos(alpha_rad)  # total
+        Tp = T / self.params["Np"]["value"]  # individual 
 
         # compute propeller geometry
         A = T / self.params["DL"]["value"]
         Ap = A / self.params["Np"]["value"]
         R = np.sqrt(Ap / np.pi)
 
-        # required propeller thrust
-        Tp = T / self.params["Np"]["value"]
-
         # propeller speed
         Vtip = self.params["Mtip"]["value"] * a
         RPM = Vtip / R * 60 / (2 * np.pi)
+
 
         # thrust coefficient
         CT = self.params["DL"]["value"] / rho / Vtip**2
@@ -116,11 +126,16 @@ class Propeller:
         # average angle of attack (rad)
         alpha_bar = Cl_bar / Cla
 
+        # flow velocities
+        mu = V * np.cos(alpha_rad) / Vtip  # adv ratio [-]
+        lam_z = V * np.sin(alpha_rad) / Vtip  # in-plane [-]
+        lam = compute_inflow(mu, lam_z, CT, 0.005)  # normalized inflow [-]
+
         # mean drag coefficient based on Bailey's Drag Curve
         Cd_bar  = 0.0087 - 0.035 * alpha_bar + 0.4 * alpha_bar**2
 
         # propeller powers
-        P0 = 1/8 * rho * Cd_bar * self.params["sigma"]["value"] * A * Vtip**3  # total profile
+        P0 = 1/8 * rho * Cd_bar * self.params["sigma"]["value"] * A * Vtip**3  # total profile power
         Ph = T * np.sqrt(self.params["DL"]["value"] / 2 / rho)  # ideal hover power
         Pi = kappa * Ph  # actual induced power
         P = Pi + P0  # total propeller power
@@ -142,6 +157,7 @@ class Propeller:
         self.perf["Pp"] = add_dictEntry("Pp", Pp, "W")
         self.perf["RPM"] = add_dictEntry("RPM", RPM, "rev/min")
         self.perf["FM"] = add_dictEntry("FM", FM, "-")
+        self.perf["lam"] = add_dictEntry("lam", lam, "-")
 
         return self
 
@@ -153,6 +169,43 @@ class Propeller:
         #TODO: finish this function
         raise NotImplementedError("This function hasn't been written yet.")
     
+    def compute_inflowForwardFlight(self, V, alpha, rho):
+        """
+        This function finds the inflow through the propeller disk in foward flight via momentum theory.
+
+        Inputs
+        -----
+        V                   :   cruise speed [m/s]
+        rho                 :   ambient air density [kg/m^3]
+        alpha               :   propeller angle of attack [deg]
+        self.perf["Tp"]     :   individual propeller thrust [N]
+
+        Outputs
+        -----
+        self.aero["lambda"] :   propeller inflow [-]
+
+
+        Author: Matt Asper (matt.asper101@gmail.com)
+        Last revised: 17 February 2026  
+        """
+
+        # extract vars
+        omega = self.perf["RPM"]["value"] * np.pi / 30  # rotor ang vel [rad/s]
+        R = self.perf["R"]["value"]  # rotor radius [m]
+
+        alpha_rad = np.pi / 180 * alpha
+
+        # compute rotor-frame airspeeds
+        Vx = float(V * np.cos(alpha_rad))
+        Vz = float(V * np.sin(alpha_rad))
+
+        # normalize airspeeds
+        mu = Vx / (omega * R)  # adv ratio
+        lambda_z = Vz / (omega * R)  # normal to rotor disk
+
+
+
+
     def display_params(self):
         """
         This function prints the propeller parameters in 'self.params' to the console.
@@ -199,14 +252,17 @@ if __name__=="__main__":
     rho = float(atmos.density)  # air density
     T = 1 / 0.15 * 9.81  # required total propeller thrust [N]
     a = float(atmos.speed_of_sound)  # speed of sound in air [m/s]
-    prop.run_propLoading("MT", T, rho, a)
+    alpha = 15  # prop tilt [deg]
+    V = 7  # flight speed [m/s]
+    prop.run_propLoading("MT", T, rho, a, alpha, V)
     prop.display_params()
 
 
-    # sweep DLs and store FM
+    # sweep DLs and store params
     DLsweep = np.linspace(100, 700)
     FM = np.zeros(DLsweep.shape)
     CT = np.zeros(DLsweep.shape)
+    lam = np.zeros(DLsweep.shape)
     for i in range(len(DLsweep)):
         DL      = {"name": "DL",    "value": DLsweep[i],       "units": "Pa"}  # disk loading [Pa]
 
@@ -220,14 +276,10 @@ if __name__=="__main__":
         prop = Propeller(**prop_specs)
 
         # run condition
-        alt = 10  # hover alt [m]
-        atmos = Atmosphere(alt)  # atmospheric data
-        rho = float(atmos.density)  # air density
-        T = 1 / 0.15 * 9.81  # required total propeller thrust [N]
-        a = float(atmos.speed_of_sound)  # speed of sound in air [m/s]
-        prop.run_propLoading("MT", T, rho, a)
+        prop.run_propLoading("MT", T, rho, a, alpha, V)
 
         FM[i] = prop.perf["FM"]["value"] 
+        lam[i] = prop.perf["lam"]["value"]
         CT[i] = DLsweep[i] / (rho * (prop.perf["RPM"]["value"] * np.pi / 30 * prop.params["R"]["value"])**2)     
 
     # Create plotly figure
@@ -235,14 +287,14 @@ if __name__=="__main__":
 
     fig.add_trace(go.Scatter(
         x=CT, 
-        y=FM, 
+        y=lam, 
         mode='lines', 
     ))
 
     # Add labels
     fig.update_layout(
         xaxis_title="Thrust Coefficient [-]",
-        yaxis_title="Figure of Merit [-]"
+        yaxis_title="Inflow [-]"
     )
 
     # Show plot

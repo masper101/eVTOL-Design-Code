@@ -87,6 +87,9 @@ class Aircraft: # make dataclass?
             # loop through vehicle subsystems and sum weights
             for key, value in self.subsystem.items():
                 self.reqs["MTOW"]["value"] += self.subsystem[key][mass] * margin
+        
+        self.iter += 1
+
 
     def display_specs(self):
         """"
