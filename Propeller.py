@@ -117,6 +117,11 @@ class Propeller:
         # blade loading
         BL = CT / self.params["sigma"]["value"]
 
+        # flow velocities
+        mu = V * np.cos(alpha_rad) / Vtip  # adv ratio [-]
+        lam_z = V * np.sin(alpha_rad) / Vtip  # in-plane [-]
+        lam = compute_inflow(mu, lam_z, CT, (CT/2)**0.5)  # normalized inflow [-]
+
         # average lift coefficient across propeller blade
         Cl_bar = 6 * BL
 
@@ -126,23 +131,21 @@ class Propeller:
         # average angle of attack (rad)
         alpha_bar = Cl_bar / Cla
 
-        # flow velocities
-        mu = V * np.cos(alpha_rad) / Vtip  # adv ratio [-]
-        lam_z = V * np.sin(alpha_rad) / Vtip  # in-plane [-]
-        lam = compute_inflow(mu, lam_z, CT, 0.005)  # normalized inflow [-]
-
         # mean drag coefficient based on Bailey's Drag Curve
         Cd_bar  = 0.0087 - 0.035 * alpha_bar + 0.4 * alpha_bar**2
 
+        # profile drag factor
+        Fp = 1 + 4.6 * mu**2
+
         # propeller powers
-        P0 = 1/8 * rho * Cd_bar * self.params["sigma"]["value"] * A * Vtip**3  # total profile power
+        P0 = 1/8 * rho * Cd_bar * self.params["sigma"]["value"] * A * Vtip**3  * Fp # total profile power
         Ph = T * np.sqrt(self.params["DL"]["value"] / 2 / rho)  # ideal hover power
         Pi = kappa * Ph  # actual induced power
         P = Pi + P0  # total propeller power
         Pp = P / self.params["Np"]["value"]  # individual propeller power 
 
         # figure of merit
-        FM = T * np.sqrt(self.params["DL"]["value"] / 2 / rho) / P
+        FM = Ph / P
 
         # update propeller params
         self.params["A"] = add_dictEntry("A", A, "m^2")
@@ -169,42 +172,6 @@ class Propeller:
         #TODO: finish this function
         raise NotImplementedError("This function hasn't been written yet.")
     
-    def compute_inflowForwardFlight(self, V, alpha, rho):
-        """
-        This function finds the inflow through the propeller disk in foward flight via momentum theory.
-
-        Inputs
-        -----
-        V                   :   cruise speed [m/s]
-        rho                 :   ambient air density [kg/m^3]
-        alpha               :   propeller angle of attack [deg]
-        self.perf["Tp"]     :   individual propeller thrust [N]
-
-        Outputs
-        -----
-        self.aero["lambda"] :   propeller inflow [-]
-
-
-        Author: Matt Asper (matt.asper101@gmail.com)
-        Last revised: 17 February 2026  
-        """
-
-        # extract vars
-        omega = self.perf["RPM"]["value"] * np.pi / 30  # rotor ang vel [rad/s]
-        R = self.perf["R"]["value"]  # rotor radius [m]
-
-        alpha_rad = np.pi / 180 * alpha
-
-        # compute rotor-frame airspeeds
-        Vx = float(V * np.cos(alpha_rad))
-        Vz = float(V * np.sin(alpha_rad))
-
-        # normalize airspeeds
-        mu = Vx / (omega * R)  # adv ratio
-        lambda_z = Vz / (omega * R)  # normal to rotor disk
-
-
-
 
     def display_params(self):
         """
@@ -259,7 +226,7 @@ if __name__=="__main__":
 
 
     # sweep DLs and store params
-    DLsweep = np.linspace(100, 700)
+    DLsweep = np.linspace(10, 1500, 100)
     FM = np.zeros(DLsweep.shape)
     CT = np.zeros(DLsweep.shape)
     lam = np.zeros(DLsweep.shape)

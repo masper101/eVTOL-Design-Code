@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     alpha = 0
     alpha2 = 8
-    CT = 0.02
+    CT = 0.008
     lam_h = float(np.sqrt(CT/2))
 
     # sweep foward speeds
@@ -45,9 +45,9 @@ if __name__ == "__main__":
     for i in range(len(mu_ratio)):
         mu = mu_ratio[i] * lam_h
         lam_z = mu * np.tan(alpha * np.pi / 180)
-        lam[i] = compute_inflow(mu, lam_z, CT, .005)
+        lam[i] = compute_inflow(mu, lam_z, CT, (CT/2)**0.5)
         lam2_z = mu * np.tan(alpha2 * np.pi / 180)
-        lam2[i] = compute_inflow(mu, lam2_z, CT, .005)
+        lam2[i] = compute_inflow(mu, lam2_z, CT, (CT/2)**0.5)
 
      # Create plotly figure
     fig = go.Figure()   
