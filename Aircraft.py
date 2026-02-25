@@ -90,6 +90,31 @@ class Aircraft: # make dataclass?
         
         self.iter += 1
 
+    def compute_drag(self, V, rho, k=1.5):
+        """
+        This function applies Frank Harris' fuselage drag model
+
+        Inputs
+        -----
+        V                               : cruise speed [m/s]
+        rho                             : air density [kg/m^3]
+        k                               : Frank Harris fuselage drag factor, typ. 1.5--4.2 [-]
+        self.reqs["MTOW"]["value"]      : aircraft max gross takeoff weight [kg]
+
+        Outputs
+        -----
+        self.perf["Df"]["value"]        : aircraft fuselage drag in cruise [N]
+
+        """
+
+        Wlb = self.reqs["MTOW"]["value"] / 0.4536  # convert kg->lb
+        
+        # Apply Frank Harris model
+        F = k*(Wlb/1000)**(2/3)  # [ft^2]
+        F = F * (0.3048)**2  # [m^2]
+        Df = 0.5 * rho * V**2 * F  # fuselage drag [N]
+
+        return Df
 
     def display_specs(self):
         """"

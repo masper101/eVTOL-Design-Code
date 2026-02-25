@@ -19,8 +19,8 @@ Last revised: 17 February 2026
 """
 
 import numpy as np
-from newton_raphson import newton_raphson
 import plotly.graph_objects as go
+from tools.newton_raphson import newton_raphson
 
 def compute_inflow(mu, lam_z, CT, lam0, tol=1e-7, max_iter=100):
 
