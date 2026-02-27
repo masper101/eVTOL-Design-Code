@@ -24,7 +24,7 @@ class Propeller:
 
         Inputs
         -----
-        kwargs      :   dictionary of various propeller user-specified propeller parameters
+        kwargs      :   dictionary of various user-specified propeller parameters
 
         Outputs
         -----
@@ -36,7 +36,7 @@ class Propeller:
         for key, value in kwargs.items():
             self.params[key] = value
 
-    def run_propLoading(self, V, model, T, rho, a):
+    def run_propLoading(self, V: float, model: str, T: float, rho: float, a: float):
         """
         This exercises user-specified propeller loading models to estimate performance.
 
@@ -66,7 +66,7 @@ class Propeller:
             raise ValueError("Inappropriate propeller model selected. " \
             "Available models include 'MT', 'BET', and 'BEMT'.")
 
-    def run_momentumTheory(self, V, W, rho, a, kappa=1.15, k=4.2):  #TODO:Validate trends
+    def run_momentumTheory(self, V: float, W: float, rho: float, a: float, kappa=1.15, k=4.2):  #TODO:Validate trends
         """
         This function applies momentum theory to determine propeller performance.
 
@@ -186,15 +186,15 @@ class Propeller:
 
         return self
 
-    def run_bladeElementTheory(self, T, rho):
+    def run_bladeElementTheory(self, T: float, rho: float):
         #TODO: finish this function
         raise NotImplementedError("This function hasn't been written yet.")
 
-    def run_bladeElementMomentumTheory(self, T, rho):
+    def run_bladeElementMomentumTheory(self, T: float, rho: float):
         #TODO: finish this function
         raise NotImplementedError("This function hasn't been written yet.")
     
-    def range_objective(self, V, *args):
+    def range_objective(self, V: float, *args):
         """
         This function provides the objective function to minimize the 
         total propeller power required versus cruise speed cruise for 
@@ -225,7 +225,7 @@ class Propeller:
 
         return P_total / V
     
-    def endurance_objective(self, V, *args):
+    def endurance_objective(self, V: float, *args):
         """
         This function provides the objective function to minimize the 
         total propeller power for finding best endurance speed.
@@ -255,7 +255,7 @@ class Propeller:
 
         return P_total
         
-    def optimize_speeds(self, model, T, rho, a):
+    def optimize_speeds(self, model: str, T: float, rho: float, a: float):
         """
         This function computes the optimum endurance and best range speed for the vehicle 
         based on propeller cruise performance.
