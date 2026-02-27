@@ -13,6 +13,7 @@ from ambiance import Atmosphere
 import plotly.graph_objects as go
 from compute_inflow import compute_inflow
 from tools.Plotting import plot_multiple_lines
+from scipy.optimize import minimize_scalar
 
 class Propeller:
 
@@ -36,7 +37,7 @@ class Propeller:
             self.params[key] = value
 
 
-    def run_propLoading(self, model, T, rho, a, alpha, V):
+    def run_propLoading(self, V, model, T, rho, a):
         """
         This exercises user-specified propeller loading models to estimate performance.
 
@@ -54,7 +55,7 @@ class Propeller:
 
         # select propeller model
         if model == "MT":
-            self.run_momentumTheory(T, rho, a, alpha, V)
+            self.run_momentumTheory(V, T, rho, a)
         elif model == "BET":
             self.run_bladeElementTheory()
         elif model == "BET":
@@ -64,7 +65,7 @@ class Propeller:
             "Available models include 'MT', 'BET', and 'BEMT'.")
 
     
-    def run_momentumTheory(self, W, rho, a, alpha, V, kappa=1.15, k=4.2):  #TODO:Validate trends
+    def run_momentumTheory(self, V, W, rho, a, kappa=1.15, k=4.2):  #TODO:Validate trends
         """
         This function applies momentum theory to determine propeller performance.
 
@@ -83,8 +84,8 @@ class Propeller:
         
         Outputs
         -----
-        self.perf["T"]      :   required total propeller thrust [N]
         self.perf           :   dictionary of propeller performance data
+        self.perf["T"]      :   required total propeller thrust [N]
         self.params["A"]    :   total propeller area [m^2]
         self.params["Ap"]   :   individual propeller area [m^2]
         self.params["R"]    :   individual propeller radius [m]
@@ -192,6 +193,65 @@ class Propeller:
         #TODO: finish this function
         raise NotImplementedError("This function hasn't been written yet.")
     
+    def range_objective(self, V, *args):
+        """
+        This function provides the objective function to minimize the 
+        total propeller power required versus cruise speed cruise for 
+        finding best range speed.
+
+        Inputs
+        -----
+
+
+        Outputs
+        -----
+
+        Author: Matt Asper (matt.asper101@gmail.com)
+        Last revised: 26 February 2026
+        """
+
+        self.run_propLoading(V, *args)
+
+        P_total = self.perf["P"]["value"]
+
+        return P_total / V
+        
+
+    def optimize_speeds(self, model, T, rho, a):
+        """
+        This function computes the optimum endurance and best range speed for the vehicle 
+        based on propeller cruise performance.
+
+        Inputs
+        -----
+        V                   :   flight speed [m/s]
+
+        Outputs
+        -----
+        self.perf["V_br"]   :   best range speed [m/s]
+        self.perf["V_be"]   :   best endurance speed [m/s]
+        self.perf["P_Vbr"]  :   total propeller power required at best range speed [W]
+        self.perf["P_Vbe"]  :   total propeller power required at best endurance speed [W]
+
+        Author: Matt Asper (matt.asper101@gmail.com)
+        Last revised: 26 February 2026
+        """
+        #TODO: update comment above and compute best endurance speed
+        
+        # find best range speed
+        result = minimize_scalar(self.range_objective, bounds=(1, np.inf), 
+                               args=(model, T, rho, a), method="bounded")
+        V_br = float(result.x)
+
+        # compute performance at best range speed
+        self.run_propLoading(V_br, model, T, rho, a)
+        P_Vbr = self.perf["P"]["value"]
+
+        # save output variables to performance dictionary
+        self.perf["V_br"] = add_dictEntry("V_br", V_br, "m/s")
+        self.perf["P_Vbr"] = add_dictEntry("P_Vbr", P_Vbr, "W")
+
+        return self
 
     def display_params(self):
         """

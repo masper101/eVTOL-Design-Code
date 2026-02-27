@@ -8,6 +8,9 @@ Last revised: 24 February 2026
 import plotly.graph_objects as go
 from typing import List, Any
 
+#TODO: edit function to so only one data point can be plotted
+#TODO: edit function to change linestyle and color
+
 def plot_multiple_lines(x_data: List[Any], y_data: List[Any], legends: List[str], yaxis: str = "Y-Axis", xaxis: str = "X-Axis"):
     """
     Plots multiple lines in a single Plotly figure.
@@ -47,3 +50,4 @@ def plot_multiple_lines(x_data: List[Any], y_data: List[Any], legends: List[str]
     # Display the figure
     fig.show()
 
+    return fig
