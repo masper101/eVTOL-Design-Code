@@ -36,7 +36,6 @@ class Propeller:
         for key, value in kwargs.items():
             self.params[key] = value
 
-
     def run_propLoading(self, V, model, T, rho, a):
         """
         This exercises user-specified propeller loading models to estimate performance.
@@ -47,6 +46,9 @@ class Propeller:
                         "MT" momentum theory
                         "BET" blade element theory
                         "BEMT" blade element momentum theory
+        T           : required total propeller thrust [N]
+        rho         : ambient air density [Pa]
+        a           : speed of sound [m/s]
         
         Ouputs
         -----
@@ -64,7 +66,6 @@ class Propeller:
             raise ValueError("Inappropriate propeller model selected. " \
             "Available models include 'MT', 'BET', and 'BEMT'.")
 
-    
     def run_momentumTheory(self, V, W, rho, a, kappa=1.15, k=4.2):  #TODO:Validate trends
         """
         This function applies momentum theory to determine propeller performance.
@@ -201,10 +202,18 @@ class Propeller:
 
         Inputs
         -----
-
-
+        model       : str specifying the loading model 
+                        "MT" momentum theory
+                        "BET" blade element theory
+                        "BEMT" blade element momentum theory
+        T           : required total propeller thrust [N]
+        rho         : ambient air density [Pa]
+        a           : speed of sound [m/s]
+        V           : flight speed [m/s]
+        
         Outputs
         -----
+        P_total / V : total required propeller power per unit flight speed [N]
 
         Author: Matt Asper (matt.asper101@gmail.com)
         Last revised: 26 February 2026
@@ -215,8 +224,37 @@ class Propeller:
         P_total = self.perf["P"]["value"]
 
         return P_total / V
-        
+    
+    def endurance_objective(self, V, *args):
+        """
+        This function provides the objective function to minimize the 
+        total propeller power for finding best endurance speed.
 
+        Inputs
+        -----
+        model       : str specifying the loading model 
+                        "MT" momentum theory
+                        "BET" blade element theory
+                        "BEMT" blade element momentum theory
+        T           : required total propeller thrust [N]
+        rho         : ambient air density [Pa]
+        a           : speed of sound [m/s]
+        V           : flight speed [m/s]
+
+        Outputs
+        -----
+        P_total     : total required propeller power [W]
+
+        Author: Matt Asper (matt.asper101@gmail.com)
+        Last revised: 26 February 2026
+        """
+
+        self.run_propLoading(V, *args)
+
+        P_total = self.perf["P"]["value"]
+
+        return P_total
+        
     def optimize_speeds(self, model, T, rho, a):
         """
         This function computes the optimum endurance and best range speed for the vehicle 
@@ -224,7 +262,13 @@ class Propeller:
 
         Inputs
         -----
-        V                   :   flight speed [m/s]
+        model       : str specifying the loading model 
+                        "MT" momentum theory
+                        "BET" blade element theory
+                        "BEMT" blade element momentum theory
+        T           : required total propeller thrust [N]
+        rho         : ambient air density [Pa]
+        a           : speed of sound [m/s]
 
         Outputs
         -----
@@ -236,20 +280,22 @@ class Propeller:
         Author: Matt Asper (matt.asper101@gmail.com)
         Last revised: 26 February 2026
         """
-        #TODO: update comment above and compute best endurance speed
-        
-        # find best range speed
-        result = minimize_scalar(self.range_objective, bounds=(1, np.inf), 
-                               args=(model, T, rho, a), method="bounded")
-        V_br = float(result.x)
 
-        # compute performance at best range speed
-        self.run_propLoading(V_br, model, T, rho, a)
-        P_Vbr = self.perf["P"]["value"]
+        # find best range speed
+        result = minimize_scalar(self.range_objective, args=(model, T, rho, a), bounds=(1e-6, 1e6))
+        V_br = result.x
+        P_Vbr = V_br * result.fun
+
+        # find endurance range speed
+        result = minimize_scalar(self.endurance_objective, args=(model, T, rho, a), bounds=(1e-6, 1e6))
+        V_be = result.x
+        P_Vbe = result.fun
 
         # save output variables to performance dictionary
         self.perf["V_br"] = add_dictEntry("V_br", V_br, "m/s")
         self.perf["P_Vbr"] = add_dictEntry("P_Vbr", P_Vbr, "W")
+        self.perf["V_be"] = add_dictEntry("V_be", V_be, "m/s")
+        self.perf["P_Vbe"] = add_dictEntry("P_Vbe", P_Vbe, "W")
 
         return self
 

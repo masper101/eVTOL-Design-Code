@@ -20,7 +20,7 @@ import plotly.graph_objects as go
 def run_propellerTest():
 
     # initialize propeller
-    Np      = {"name": "Np",    "value": 4,         "units": "-"}  # number of propellers
+    Np      = {"name": "Np",    "value": 5,         "units": "-"}  # number of propellers
     Mtip    = {"name": "Mtip",  "value": 0.2,       "units": "-"}  # tip mach
     sigma   = {"name": "sigma", "value": 0.12,      "units": "-"}  # solidity 
     DL      = {"name": "DL",    "value": 50,       "units": "Pa"}  # disk loading [Pa]
@@ -72,7 +72,7 @@ def run_propellerTest():
 
 
     #print best range speed perf
-    print(f"\nPrinting best range speed performance...\n")
+    print(f"\nPrinting best endurance speed performance...\n")
     prop.display_params()
 
     #create a reference line for P/V
@@ -98,7 +98,19 @@ def run_propellerTest():
             )
         )
     )
-
+    fig.add_trace(
+        go.Scatter(
+            x=[prop.perf["V_be"]["value"]],
+            y=[prop.perf["P_Vbe"]["value"]],
+            mode='markers', # Display only as a marker
+            name='P_Vbe', # Name for the legend
+            marker=dict(
+                color='green',  # Customize the marker color
+                size=15,      # Customize the marker size
+                symbol='diamond' # Customize the marker symbol (e.g., 'circle', 'diamond', 'star')
+            )
+        )
+    )
     fig.show()
 
 
